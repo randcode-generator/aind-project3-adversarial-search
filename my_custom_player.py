@@ -38,9 +38,16 @@ class CustomPlayer(DataPlayer):
         **********************************************************************
         """
         if state.ply_count < 2:
-            self.queue.put(random.choice(state.actions()))
+            acts = state.actions()
+            if 57 in acts:
+                index = acts.index(57)
+                self.queue.put(state.actions()[index])
+            else:
+                self.queue.put(state.actions()[int(len(acts)/2)])
         else:
             best = self.alpha_beta_search(state, depth=4)
+            if best == None:
+                best = state.actions()[0]
             self.queue.put(best)
 
     def alpha_beta_search(self, state, depth):
@@ -70,8 +77,9 @@ class CustomPlayer(DataPlayer):
         nodes.
         """
         if state.terminal_test():
-            return state.utility(0)
-        if depth <= 0: return self.score(state, depth)
+            return state.utility(self.player_id)
+        if depth <= 0:
+            return self.score(state, depth)
         v = float("inf")
         for a in state.actions():
             v = min(v, self.max_value(state.result(a), alpha, beta, depth-1))
@@ -86,8 +94,9 @@ class CustomPlayer(DataPlayer):
         nodes.
         """
         if state.terminal_test():
-            return state.utility(0)
-        if depth <= 0: return self.score(state, depth)
+            return state.utility(self.player_id)
+        if depth <= 0: 
+            return self.score(state, depth)
         v = float("-inf")
         for a in state.actions():
             v = max(v, self.min_value(state.result(a), alpha, beta, depth-1))
@@ -101,4 +110,4 @@ class CustomPlayer(DataPlayer):
         opp_loc = state.locs[1 - self.player_id]
         own_liberties = state.liberties(own_loc)
         opp_liberties = state.liberties(opp_loc)
-        return (depth+1) * 2 * (len(own_liberties) + len(opp_liberties))
+        return (len(own_liberties)*2 - len(opp_liberties))
