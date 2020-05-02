@@ -39,11 +39,9 @@ class CustomPlayer(DataPlayer):
         """
         if state.ply_count < 2:
             acts = state.actions()
-            if 57 in acts:
-                index = acts.index(57)
-                self.queue.put(state.actions()[index])
-            else:
-                self.queue.put(state.actions()[int(len(acts)/2)])
+            # Choose the middle action. If this is the first move, choose the center
+            index = int(len(acts)/2)
+            self.queue.put(state.actions()[index])
         else:
             best = self.alpha_beta_search(state, depth=4)
             if best == None:
