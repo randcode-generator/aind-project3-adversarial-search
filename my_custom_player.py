@@ -2,7 +2,6 @@ from collections import defaultdict, Counter
 import random
 from sample_players import DataPlayer
 
-
 class CustomPlayer(DataPlayer):
     """ Implement your own agent to play knight's Isolation
 
@@ -40,8 +39,9 @@ class CustomPlayer(DataPlayer):
         if state.ply_count < 2:
             acts = state.actions()
             # Choose the middle action. If this is the first move, choose the center
-            index = int(len(acts)/2)
-            self.queue.put(state.actions()[index])
+            index = int(len(acts)/2)-1
+            act = state.actions()[index]
+            self.queue.put(act)
         else:
             best = self.alpha_beta_search(state, depth=4)
             if best == None:
