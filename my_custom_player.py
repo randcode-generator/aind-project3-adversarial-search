@@ -1,6 +1,8 @@
 from collections import defaultdict, Counter
 import random
 from sample_players import DataPlayer
+from isolation import DebugState
+import math
 
 class CustomPlayer(DataPlayer):
     """ Implement your own agent to play knight's Isolation
@@ -39,9 +41,13 @@ class CustomPlayer(DataPlayer):
         if state.ply_count < 2:
             acts = state.actions()
             # Choose the middle action. If this is the first move, choose the center
-            index = int(len(acts)/2)-1
-            act = state.actions()[index]
-            self.queue.put(act)
+            if 57 in acts:
+                index = acts.index(57)
+                self.queue.put(acts[index])
+            else:
+                index = int(len(acts)/2)-1
+                act = state.actions()[index]
+                self.queue.put(act)
         else:
             best = self.alpha_beta_search(state, depth=4)
             if best == None:
@@ -70,10 +76,6 @@ class CustomPlayer(DataPlayer):
         return best_move
     
     def min_value(self, state, alpha, beta, depth):
-        """ Return the value for a win (+1) if the game is over,
-        otherwise return the minimum value over all legal child
-        nodes.
-        """
         if state.terminal_test():
             return state.utility(self.player_id)
         if depth <= 0:
@@ -87,14 +89,8 @@ class CustomPlayer(DataPlayer):
         return v
 
     def max_value(self, state, alpha, beta, depth):
-        """ Return the value for a loss (-1) if the game is over,
-        otherwise return the maximum value over all legal child
-        nodes.
-        """
-        if state.terminal_test():
-            return state.utility(self.player_id)
-        if depth <= 0: 
-            return self.score(state, depth)
+        if state.terminal_test(): return state.utility(self.player_id)
+        if depth <= 0: return self.score(state, depth)
         v = float("-inf")
         for a in state.actions():
             v = max(v, self.min_value(state.result(a), alpha, beta, depth-1))
@@ -108,4 +104,4 @@ class CustomPlayer(DataPlayer):
         opp_loc = state.locs[1 - self.player_id]
         own_liberties = state.liberties(own_loc)
         opp_liberties = state.liberties(opp_loc)
-        return (len(own_liberties)*2 - len(opp_liberties))
+        return abs((len(own_liberties)*2 - len(opp_liberties)))
