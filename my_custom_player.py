@@ -41,7 +41,6 @@ class CustomPlayer(DataPlayer):
             start += 13
             end += 13
         self.q4 = set(self.q4)
-        #print(self.q4)
 
     """ Implement your own agent to play knight's Isolation
 
