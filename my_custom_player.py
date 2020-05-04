@@ -1,7 +1,6 @@
 from collections import defaultdict, Counter
 import random
 from sample_players import DataPlayer
-from isolation import DebugState
 import math
 
 class CustomPlayer(DataPlayer):
@@ -14,6 +13,7 @@ class CustomPlayer(DataPlayer):
             self.q1 += list(range(start, end))
             start += 13
             end += 13
+        self.q1 = set(self.q1)
         #print(self.q1)
 
         self.q2 = []
@@ -23,6 +23,7 @@ class CustomPlayer(DataPlayer):
             self.q2 += list(range(start, end))
             start += 13
             end += 13
+        self.q2 = set(self.q2)
         #print(self.q2)
 
         self.q3 = []
@@ -32,6 +33,7 @@ class CustomPlayer(DataPlayer):
             self.q3 += list(range(start, end))
             start += 13
             end += 13
+        self.q3 = set(self.q3)
         #print(self.q3)
 
         self.q4 = []
@@ -41,6 +43,7 @@ class CustomPlayer(DataPlayer):
             self.q4 += list(range(start, end))
             start += 13
             end += 13
+        self.q4 = set(self.q4)
         #print(self.q4)
 
     """ Implement your own agent to play knight's Isolation
@@ -146,25 +149,15 @@ class CustomPlayer(DataPlayer):
 
     def score1(self, state, depth):
         own_loc = state.locs[self.player_id]
-        #opp_loc = state.locs[1 - self.player_id]
         own_liberties = state.liberties(own_loc)
-        # opp_liberties = state.liberties(opp_loc)
         f = 0
         if own_loc in self.q1:
-            f = self.numOfFreeInQuadrant(state, self.q1)
-            #print(own_loc, "q1")
-            #print(f)   
+            f = self.numOfFreeInQuadrant(state, self.q1)  
         elif own_loc in self.q2:
             f = self.numOfFreeInQuadrant(state, self.q2)
-            #print(own_loc, "q2")
-            #print(f)
         elif own_loc in self.q3:
             f = self.numOfFreeInQuadrant(state, self.q3)
-            #print(own_loc, "q3")
-            #print(f)
         elif own_loc in self.q4:
             f = self.numOfFreeInQuadrant(state, self.q4)
-            #print(own_loc, "q4")
-            #print(f)
 
         return len(own_liberties) + f
