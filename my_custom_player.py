@@ -86,7 +86,7 @@ class CustomPlayer(DataPlayer):
                 act = state.actions()[index]
                 self.queue.put(act)
         else:
-            for i in range(2, 5):
+            for i in range(1, 5):
                 best = self.alpha_beta_search(state, depth=i)
                 if best == None:
                     best = state.actions()[0]
