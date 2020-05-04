@@ -14,7 +14,6 @@ class CustomPlayer(DataPlayer):
             start += 13
             end += 13
         self.q1 = set(self.q1)
-        #print(self.q1)
 
         self.q2 = []
         start = 0
@@ -24,7 +23,6 @@ class CustomPlayer(DataPlayer):
             start += 13
             end += 13
         self.q2 = set(self.q2)
-        #print(self.q2)
 
         self.q3 = []
         start = 5
@@ -34,7 +32,6 @@ class CustomPlayer(DataPlayer):
             start += 13
             end += 13
         self.q3 = set(self.q3)
-        #print(self.q3)
 
         self.q4 = []
         start = 57
@@ -159,5 +156,7 @@ class CustomPlayer(DataPlayer):
             f = self.numOfFreeInQuadrant(state, self.q3)
         elif own_loc in self.q4:
             f = self.numOfFreeInQuadrant(state, self.q4)
+        else:
+            raise Exception("not found in any quad")
 
         return len(own_liberties) + f
