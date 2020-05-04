@@ -5,6 +5,44 @@ from isolation import DebugState
 import math
 
 class CustomPlayer(DataPlayer):
+    def __init__(self, player_id):
+        super().__init__(player_id)
+        self.q1 = []
+        start = 52
+        end = 58
+        for _ in range(5):
+            self.q1 += list(range(start, end))
+            start += 13
+            end += 13
+        #print(self.q1)
+
+        self.q2 = []
+        start = 0
+        end = 6
+        for _ in range(5):
+            self.q2 += list(range(start, end))
+            start += 13
+            end += 13
+        #print(self.q2)
+
+        self.q3 = []
+        start = 5
+        end = 11
+        for _ in range(5):
+            self.q3 += list(range(start, end))
+            start += 13
+            end += 13
+        #print(self.q3)
+
+        self.q4 = []
+        start = 57
+        end = 63
+        for _ in range(5):
+            self.q4 += list(range(start, end))
+            start += 13
+            end += 13
+        #print(self.q4)
+
     """ Implement your own agent to play knight's Isolation
 
     The get_action() method is the only required method for this project.
@@ -79,7 +117,7 @@ class CustomPlayer(DataPlayer):
         if state.terminal_test():
             return state.utility(self.player_id)
         if depth <= 0:
-            return self.score(state, depth)
+            return self.score1(state, depth)
         v = float("inf")
         for a in state.actions():
             v = min(v, self.max_value(state.result(a), alpha, beta, depth-1))
@@ -90,7 +128,7 @@ class CustomPlayer(DataPlayer):
 
     def max_value(self, state, alpha, beta, depth):
         if state.terminal_test(): return state.utility(self.player_id)
-        if depth <= 0: return self.score(state, depth)
+        if depth <= 0: raise Exception("shouldn't be here")
         v = float("-inf")
         for a in state.actions():
             v = max(v, self.min_value(state.result(a), alpha, beta, depth-1))
@@ -99,9 +137,34 @@ class CustomPlayer(DataPlayer):
             alpha = max(alpha, v)
         return v
 
-    def score(self, state, depth):
+    def numOfFreeInQuadrant(self, state, quad):
+        num = 0
+        for loc in quad:
+            if state.board & (1 << loc):
+                num += 1
+        return num
+
+    def score1(self, state, depth):
         own_loc = state.locs[self.player_id]
-        opp_loc = state.locs[1 - self.player_id]
+        #opp_loc = state.locs[1 - self.player_id]
         own_liberties = state.liberties(own_loc)
-        opp_liberties = state.liberties(opp_loc)
-        return abs((len(own_liberties)*2 - len(opp_liberties)))
+        # opp_liberties = state.liberties(opp_loc)
+        f = 0
+        if own_loc in self.q1:
+            f = self.numOfFreeInQuadrant(state, self.q1)
+            #print(own_loc, "q1")
+            #print(f)   
+        elif own_loc in self.q2:
+            f = self.numOfFreeInQuadrant(state, self.q2)
+            #print(own_loc, "q2")
+            #print(f)
+        elif own_loc in self.q3:
+            f = self.numOfFreeInQuadrant(state, self.q3)
+            #print(own_loc, "q3")
+            #print(f)
+        elif own_loc in self.q4:
+            f = self.numOfFreeInQuadrant(state, self.q4)
+            #print(own_loc, "q4")
+            #print(f)
+
+        return len(own_liberties) + f
