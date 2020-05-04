@@ -86,10 +86,11 @@ class CustomPlayer(DataPlayer):
                 act = state.actions()[index]
                 self.queue.put(act)
         else:
-            best = self.alpha_beta_search(state, depth=4)
-            if best == None:
-                best = state.actions()[0]
-            self.queue.put(best)
+            for i in range(2, 5):
+                best = self.alpha_beta_search(state, depth=i)
+                if best == None:
+                    best = state.actions()[0]
+                self.queue.put(best)
 
     def alpha_beta_search(self, state, depth):
         """ Return the move along a branch of the game tree that
@@ -116,7 +117,7 @@ class CustomPlayer(DataPlayer):
         if state.terminal_test():
             return state.utility(self.player_id)
         if depth <= 0:
-            return self.score1(state, depth)
+            return self.score(state, depth)
         v = float("inf")
         for a in state.actions():
             v = min(v, self.max_value(state.result(a), alpha, beta, depth-1))
@@ -127,7 +128,7 @@ class CustomPlayer(DataPlayer):
 
     def max_value(self, state, alpha, beta, depth):
         if state.terminal_test(): return state.utility(self.player_id)
-        if depth <= 0: raise Exception("shouldn't be here")
+        if depth <= 0: return self.score(state, depth)
         v = float("-inf")
         for a in state.actions():
             v = max(v, self.min_value(state.result(a), alpha, beta, depth-1))
@@ -143,7 +144,7 @@ class CustomPlayer(DataPlayer):
                 num += 1
         return num
 
-    def score1(self, state, depth):
+    def score(self, state, depth):
         own_loc = state.locs[self.player_id]
         own_liberties = state.liberties(own_loc)
         f = 0
