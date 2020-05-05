@@ -4,15 +4,37 @@ from sample_players import DataPlayer
 import pickle
 
 class CustomPlayer(DataPlayer):
-    #def __del__(self):
-        # with open("data.pickle", "rb") as f:
-        #     data = pickle.load(f)
-        #     data.update(self.context)
-        #     with open("data.pickle", "wb") as f:
-        #         pickle.dump(self.context, f)
+    def writeFile(self, filename, history, data=None):
+        with open(filename, "wb") as f:
+            t = {}
+            for key in history:
+                g = history[key]
+                t[g["board"]] = g["move"]
+            if(data != None):
+                t.update(data)
+            pickle.dump(t, f)
+
+    def __del__(self):
+        if(self.newRecords == False):
+            return
+        self.filename = "data.pickle"
+
+        history = self.context["history"]
+        if(history == None):
+            return
+        from os import path
+        exists = path.exists("data.pickle")
+        if(exists):
+            with open("data.pickle", "rb") as f:
+                data = pickle.load(f)
+                self.writeFile(self.filename, history, data)
+        else:
+            self.writeFile(self.filename, history)
 
     def __init__(self, player_id):
         super().__init__(player_id)
+        self.newRecords = False
+
         self.q1 = []
         start = 52
         end = 58
@@ -50,7 +72,15 @@ class CustomPlayer(DataPlayer):
         self.q4 = set(self.q4)
 
         self.context = {"book": self.data, "history": {}}
-        
+    
+    def insertHistory(self, state, bestMove):
+        if bestMove == None:
+            self.context["history"] = None
+        else:
+            history = self.context["history"]
+            if(history != None and len(history) < 3):
+                self.context["history"][state.ply_count] = {"board": state.board, "move": bestMove}
+
     """ Implement your own agent to play knight's Isolation
 
     The get_action() method is the only required method for this project.
@@ -84,26 +114,35 @@ class CustomPlayer(DataPlayer):
           Refer to (and use!) the Isolation.play() function to run games.
         **********************************************************************
         """
+        book = self.context["book"]
+        if(state.ply_count <= 4):
+            if(state.board in book):
+                act = book[state.board]
+                self.queue.put(act)
+                self.insertHistory(state, act)
+            else:
+                self.newRecords = True
+
         if state.ply_count < 2:
             acts = state.actions()
             # Choose the middle action. If this is the first move, choose the center
             if 57 in acts:
                 index = acts.index(57)
-                self.queue.put(acts[index])
+                act = acts[index]
+                self.queue.put(act)
+                self.insertHistory(state, act)
             else:
                 index = int(len(acts)/2)-1
                 act = state.actions()[index]
                 self.queue.put(act)
+                self.insertHistory(state, act)
         else:
             for i in range(1, 5):
-                outcome = best = self.alpha_beta_search(state, depth=i)
-                if best == None:
-                    best = state.actions()[0]
-                if outcome == None:
-                    self.context["history"] = {}
-                else:
-                    self.context["history"][state.ply_count] = {"board": state.board, "move": best}
-                self.queue.put(best)
+                bestMove = self.alpha_beta_search(state, depth=i)
+                self.insertHistory(state, bestMove)
+                if bestMove == None:
+                    bestMove = state.actions()[0]
+                self.queue.put(bestMove)
 
     def alpha_beta_search(self, state, depth):
         """ Return the move along a branch of the game tree that
