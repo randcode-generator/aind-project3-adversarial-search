@@ -1,9 +1,16 @@
 from collections import defaultdict, Counter
 import random
 from sample_players import DataPlayer
-import math
+import pickle
 
 class CustomPlayer(DataPlayer):
+    #def __del__(self):
+        # with open("data.pickle", "rb") as f:
+        #     data = pickle.load(f)
+        #     data.update(self.context)
+        #     with open("data.pickle", "wb") as f:
+        #         pickle.dump(self.context, f)
+
     def __init__(self, player_id):
         super().__init__(player_id)
         self.q1 = []
@@ -42,6 +49,8 @@ class CustomPlayer(DataPlayer):
             end += 13
         self.q4 = set(self.q4)
 
+        self.context = {"book": self.data, "history": {}}
+        
     """ Implement your own agent to play knight's Isolation
 
     The get_action() method is the only required method for this project.
@@ -87,9 +96,13 @@ class CustomPlayer(DataPlayer):
                 self.queue.put(act)
         else:
             for i in range(1, 5):
-                best = self.alpha_beta_search(state, depth=i)
+                outcome = best = self.alpha_beta_search(state, depth=i)
                 if best == None:
                     best = state.actions()[0]
+                if outcome == None:
+                    self.context["history"] = {}
+                else:
+                    self.context["history"][state.ply_count] = {"board": state.board, "move": best}
                 self.queue.put(best)
 
     def alpha_beta_search(self, state, depth):
