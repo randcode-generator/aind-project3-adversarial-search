@@ -15,7 +15,7 @@ class CustomPlayer(DataPlayer):
             pickle.dump(t, f)
 
     def __del__(self):
-        if(self.newRecords == False):
+        if(self.context["newRecords"] == False):
             return
         self.filename = "data.pickle"
 
@@ -33,7 +33,6 @@ class CustomPlayer(DataPlayer):
 
     def __init__(self, player_id):
         super().__init__(player_id)
-        self.newRecords = False
 
         self.q1 = []
         start = 52
@@ -71,7 +70,7 @@ class CustomPlayer(DataPlayer):
             end += 13
         self.q4 = set(self.q4)
 
-        self.context = {"book": self.data, "history": {}}
+        self.context = {"book": self.data, "history": {}, "newRecords": False}
     
     def insertHistory(self, state, bestMove):
         if bestMove == None:
@@ -115,13 +114,14 @@ class CustomPlayer(DataPlayer):
         **********************************************************************
         """
         book = self.context["book"]
-        if(state.ply_count <= 4):
-            if(state.board in book):
+        if(state.ply_count >= 2 and state.ply_count <= 7):
+            if(book != None and state.board in book):
                 act = book[state.board]
                 self.queue.put(act)
                 self.insertHistory(state, act)
+                return
             else:
-                self.newRecords = True
+                self.context["newRecords"] = True
 
         if state.ply_count < 2:
             acts = state.actions()
@@ -130,12 +130,10 @@ class CustomPlayer(DataPlayer):
                 index = acts.index(57)
                 act = acts[index]
                 self.queue.put(act)
-                self.insertHistory(state, act)
             else:
                 index = int(len(acts)/2)-1
                 act = state.actions()[index]
                 self.queue.put(act)
-                self.insertHistory(state, act)
         else:
             for i in range(1, 5):
                 bestMove = self.alpha_beta_search(state, depth=i)
