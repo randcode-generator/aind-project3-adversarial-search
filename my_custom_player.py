@@ -175,7 +175,7 @@ class CustomPlayer(DataPlayer):
             alpha = max(alpha, v)
         return v
 
-    def numOfFreeInQuadrant(self, state, quad):
+    def numOfFreeCellsInQuadrant(self, state, quad):
         num = 0
         for loc in quad:
             if state.board & (1 << loc):
@@ -187,13 +187,13 @@ class CustomPlayer(DataPlayer):
         own_liberties = state.liberties(own_loc)
         f = 0
         if own_loc in self.q1:
-            f = self.numOfFreeInQuadrant(state, self.q1)  
+            f = self.numOfFreeCellsInQuadrant(state, self.q1)  
         elif own_loc in self.q2:
-            f = self.numOfFreeInQuadrant(state, self.q2)
+            f = self.numOfFreeCellsInQuadrant(state, self.q2)
         elif own_loc in self.q3:
-            f = self.numOfFreeInQuadrant(state, self.q3)
+            f = self.numOfFreeCellsInQuadrant(state, self.q3)
         elif own_loc in self.q4:
-            f = self.numOfFreeInQuadrant(state, self.q4)
+            f = self.numOfFreeCellsInQuadrant(state, self.q4)
         else:
             raise Exception("not found in any quad")
 
