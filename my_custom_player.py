@@ -23,9 +23,9 @@ class CustomPlayer(DataPlayer):
         if(history == None):
             return
         from os import path
-        exists = path.exists("data.pickle")
+        exists = path.exists(self.filename)
         if(exists):
-            with open("data.pickle", "rb") as f:
+            with open(self.filename, "rb") as f:
                 data = pickle.load(f)
                 self.writeFile(self.filename, history, data)
         else:
