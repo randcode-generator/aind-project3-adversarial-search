@@ -1,11 +1,64 @@
-
+from enum import IntEnum
 from sample_players import DataPlayer
+import pickle
 
+class OpeningBookConfig(IntEnum):
+    DISABLED = 0,
+    EVALUATION = 1,
+    TRAINING = 2
 
 class CustomPlayer(DataPlayer):
+    def writeFile(self, filename, history, data=None):
+        t = {}
+        for key in history:
+            statePlusMove = history[key]
+            t[statePlusMove["board"]] = statePlusMove["move"]
+        sizeBeforeMerge = len(data)
+        if(data != None):
+            t.update(data)
+        sizeAfterMerge = len(t)
+        if(sizeBeforeMerge == sizeAfterMerge):
+            return
+        with open(filename, "wb") as f:
+            pickle.dump(t, f)
+
+    def __del__(self):
+        self.filename = "data.pickle"
+        
+        if(self.openingBookConfig != OpeningBookConfig.TRAINING):
+            return
+        from os import path
+        exists = path.exists(self.filename)
+        if(exists == False):
+            return
+
+        history = self.context["history"]
+        if(history == None):
+            return
+
+        with open(self.filename, "rb") as f:
+            data = pickle.load(f)
+            self.writeFile(self.filename, history, data)
+
     def __init__(self, player_id):
         super().__init__(player_id)
+        """
+        CONFIGURATIONS - START
+        """
+        """
+        OpeningBookConfig.DISABLED: do not use apply opening book technique. Will not use values from "data.pickle".
+        OpeningBookConfig.EVALUATION: uses "data.pickle" values for next actions. Does not write new moves to "data.pickle".
+        OpeningBookConfig.TRAINING: uses "data.pickle" values for next actions. Does save new moves to "data.pickle" file.
+        """
+        self.openingBookConfig = OpeningBookConfig.DISABLED
 
+        """
+        Choose between 'score_baseline' and 'score_quadrant' heuristics
+        """
+        self.score = self.score_quadrant
+        """
+        CONFIGURATIONS - END
+        """
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
         arrs = []
         for r in ranges:
@@ -22,6 +75,16 @@ class CustomPlayer(DataPlayer):
         self.q2 = arrs[1]
         self.q3 = arrs[2]
         self.q4 = arrs[3]
+
+        self.context = {"history": {}}
+    
+    def insertHistory(self, state, bestMove):
+        if bestMove == None:
+            self.context["history"] = None
+        else:
+            history = self.context["history"]
+            if(history != None and len(history) < 4):
+                self.context["history"][state.ply_count] = {"board": state.board, "move": bestMove}
 
     """ Implement your own agent to play knight's Isolation
 
@@ -56,6 +119,14 @@ class CustomPlayer(DataPlayer):
           Refer to (and use!) the Isolation.play() function to run games.
         **********************************************************************
         """
+        if(self.openingBookConfig == OpeningBookConfig.EVALUATION):
+            book = self.data
+            if(book != None and state.ply_count >= 2 and state.ply_count <= 9):
+                if(state.board in book):
+                    act = book[state.board]
+                    self.queue.put(act)
+                    return
+
         if state.ply_count < 2:
             acts = state.actions()
             # Choose the middle action. If this is the first move, choose the center
@@ -68,11 +139,12 @@ class CustomPlayer(DataPlayer):
                 act = state.actions()[index]
                 self.queue.put(act)
         else:
-            for i in range(1, 5):
-                bestMove = self.alpha_beta_search(state, depth=i)
+            for i in range(1, 6):
+                temp = bestMove = self.alpha_beta_search(state, depth=i)
                 if bestMove == None:
                     bestMove = state.actions()[0]
                 self.queue.put(bestMove)
+                self.insertHistory(state, temp)
 
     def alpha_beta_search(self, state, depth):
         """ Return the move along a branch of the game tree that
@@ -99,7 +171,7 @@ class CustomPlayer(DataPlayer):
         if state.terminal_test():
             return state.utility(self.player_id)
         if depth <= 0:
-            return self.score(state, depth)
+            return self.score(state)
         v = float("inf")
         for a in state.actions():
             v = min(v, self.max_value(state.result(a), alpha, beta, depth-1))
@@ -110,7 +182,7 @@ class CustomPlayer(DataPlayer):
 
     def max_value(self, state, alpha, beta, depth):
         if state.terminal_test(): return state.utility(self.player_id)
-        if depth <= 0: return self.score(state, depth)
+        if depth <= 0: return self.score(state)
         v = float("-inf")
         for a in state.actions():
             v = max(v, self.min_value(state.result(a), alpha, beta, depth-1))
@@ -126,7 +198,7 @@ class CustomPlayer(DataPlayer):
                 num += 1
         return num
 
-    def score(self, state, depth):
+    def score_quadrant(self, state):
         own_loc = state.locs[self.player_id]
         own_liberties = state.liberties(own_loc)
         f = 0
@@ -142,3 +214,10 @@ class CustomPlayer(DataPlayer):
             raise Exception("not found in any quad")
 
         return len(own_liberties) + f
+
+    def score_baseline(self, state):
+        own_loc = state.locs[self.player_id]
+        opp_loc = state.locs[1 - self.player_id]
+        own_liberties = state.liberties(own_loc)
+        opp_liberties = state.liberties(opp_loc)
+        return len(own_liberties) - len(opp_liberties)
