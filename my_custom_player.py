@@ -15,6 +15,8 @@ class CustomPlayer(DataPlayer):
             pickle.dump(t, f)
 
     def __del__(self):
+        if(self.data == None):
+            return
         if(self.context["newRecords"] == False):
             return
         self.filename = "data.pickle"
@@ -33,6 +35,9 @@ class CustomPlayer(DataPlayer):
 
     def __init__(self, player_id):
         super().__init__(player_id)
+        # Uncomment line below to use disable opening book
+        self.data = None
+
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
         arrs = []
         for r in ranges:
@@ -94,8 +99,8 @@ class CustomPlayer(DataPlayer):
         **********************************************************************
         """
         book = self.data
-        if(state.ply_count >= 2 and state.ply_count <= 9):
-            if(book != None and state.board in book):
+        if(book != None and state.ply_count >= 2 and state.ply_count <= 9):
+            if(state.board in book):
                 act = book[state.board]
                 self.queue.put(act)
                 self.insertHistory(state, act)
