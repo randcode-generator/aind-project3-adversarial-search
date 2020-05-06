@@ -15,28 +15,31 @@ class CustomPlayer(DataPlayer):
             pickle.dump(t, f)
 
     def __del__(self):
+        self.filename = "data.pickle"
+        
+        from os import path
+        exists = path.exists(self.filename)
+        if(exists == False):
+            return
+
         if(self.data == None):
             return
         if(self.context["newRecords"] == False):
             return
-        self.filename = "data.pickle"
 
         history = self.context["history"]
         if(history == None):
             return
-        from os import path
-        exists = path.exists(self.filename)
-        if(exists):
-            with open(self.filename, "rb") as f:
-                data = pickle.load(f)
-                self.writeFile(self.filename, history, data)
-        else:
-            self.writeFile(self.filename, history)
+
+        with open(self.filename, "rb") as f:
+            data = pickle.load(f)
+            self.writeFile(self.filename, history, data)
+
 
     def __init__(self, player_id):
         super().__init__(player_id)
         # Uncomment line below to use disable opening book
-        self.data = None
+        # self.data = None
 
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
         arrs = []
