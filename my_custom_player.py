@@ -8,8 +8,8 @@ class CustomPlayer(DataPlayer):
         with open(filename, "wb") as f:
             t = {}
             for key in history:
-                g = history[key]
-                t[g["board"]] = g["move"]
+                statePlusMove = history[key]
+                t[statePlusMove["board"]] = statePlusMove["move"]
             if(data != None):
                 t.update(data)
             pickle.dump(t, f)
@@ -38,7 +38,7 @@ class CustomPlayer(DataPlayer):
 
     def __init__(self, player_id):
         super().__init__(player_id)
-        # Uncomment line below to use disable opening book
+        # Uncomment line below to disable opening book
         # self.data = None
 
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
