@@ -3,6 +3,26 @@ from sample_players import DataPlayer
 
 
 class CustomPlayer(DataPlayer):
+    def __init__(self, player_id):
+        super().__init__(player_id)
+
+        ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
+        arrs = []
+        for r in ranges:
+            s = set()
+            start = r[0]
+            end = r[1]
+            for _ in range(5):
+                s.update(list(range(start, end)))
+                start += 13
+                end += 13
+            arrs.append(s)
+        
+        self.q1 = arrs[0]
+        self.q2 = arrs[1]
+        self.q3 = arrs[2]
+        self.q4 = arrs[3]
+
     """ Implement your own agent to play knight's Isolation
 
     The get_action() method is the only required method for this project.
@@ -36,11 +56,89 @@ class CustomPlayer(DataPlayer):
           Refer to (and use!) the Isolation.play() function to run games.
         **********************************************************************
         """
-        # TODO: Replace the example implementation below with your own search
-        #       method by combining techniques from lecture
-        #
-        # EXAMPLE: choose a random move without any search--this function MUST
-        #          call self.queue.put(ACTION) at least once before time expires
-        #          (the timer is automatically managed for you)
-        import random
-        self.queue.put(random.choice(state.actions()))
+        if state.ply_count < 2:
+            acts = state.actions()
+            # Choose the middle action. If this is the first move, choose the center
+            if 57 in acts:
+                index = acts.index(57)
+                act = acts[index]
+                self.queue.put(act)
+            else:
+                index = int(len(acts)/2)-1
+                act = state.actions()[index]
+                self.queue.put(act)
+        else:
+            for i in range(1, 5):
+                bestMove = self.alpha_beta_search(state, depth=i)
+                if bestMove == None:
+                    bestMove = state.actions()[0]
+                self.queue.put(bestMove)
+
+    def alpha_beta_search(self, state, depth):
+        """ Return the move along a branch of the game tree that
+        has the best possible value.  A move is a pair of coordinates
+        in (column, row) order corresponding to a legal move for
+        the searching player.
+        
+        You can ignore the special case of calling this function
+        from a terminal state.
+        """
+        alpha = float("-inf")
+        beta = float("inf")
+        best_score = float("-inf")
+        best_move = None
+        for a in state.actions():
+            v = self.min_value(state.result(a), alpha, beta, depth)
+            alpha = max(alpha, v)
+            if v > best_score:
+                best_score = v
+                best_move = a
+        return best_move
+    
+    def min_value(self, state, alpha, beta, depth):
+        if state.terminal_test():
+            return state.utility(self.player_id)
+        if depth <= 0:
+            return self.score(state, depth)
+        v = float("inf")
+        for a in state.actions():
+            v = min(v, self.max_value(state.result(a), alpha, beta, depth-1))
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+        return v
+
+    def max_value(self, state, alpha, beta, depth):
+        if state.terminal_test(): return state.utility(self.player_id)
+        if depth <= 0: return self.score(state, depth)
+        v = float("-inf")
+        for a in state.actions():
+            v = max(v, self.min_value(state.result(a), alpha, beta, depth-1))
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+        return v
+
+    def numOfFreeCellsInQuadrant(self, state, quad):
+        num = 0
+        for loc in quad:
+            if state.board & (1 << loc):
+                num += 1
+        return num
+
+    def score(self, state, depth):
+        own_loc = state.locs[self.player_id]
+        own_liberties = state.liberties(own_loc)
+        f = 0
+        if own_loc in self.q1:
+            f = self.numOfFreeCellsInQuadrant(state, self.q1)  
+        elif own_loc in self.q2:
+            f = self.numOfFreeCellsInQuadrant(state, self.q2)
+        elif own_loc in self.q3:
+            f = self.numOfFreeCellsInQuadrant(state, self.q3)
+        elif own_loc in self.q4:
+            f = self.numOfFreeCellsInQuadrant(state, self.q4)
+        else:
+            raise Exception("not found in any quad")
+
+        return len(own_liberties) + f
