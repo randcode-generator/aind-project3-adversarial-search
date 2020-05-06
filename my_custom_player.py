@@ -1,7 +1,13 @@
+from enum import IntEnum
 from collections import defaultdict, Counter
 import random
 from sample_players import DataPlayer
 import pickle
+
+class OpeningBookConfig(IntEnum):
+    DISABLED = 0,
+    EVALUATION = 1,
+    TRAINING = 2
 
 class CustomPlayer(DataPlayer):
     def writeFile(self, filename, history, data=None):
@@ -17,13 +23,13 @@ class CustomPlayer(DataPlayer):
     def __del__(self):
         self.filename = "data.pickle"
         
+        if(self.openingBookConfig != OpeningBookConfig.TRAINING):
+            return
         from os import path
         exists = path.exists(self.filename)
         if(exists == False):
             return
 
-        if(self.data == None):
-            return
         if(self.context["newRecords"] == False):
             return
 
@@ -38,8 +44,10 @@ class CustomPlayer(DataPlayer):
 
     def __init__(self, player_id):
         super().__init__(player_id)
-        # Uncomment line below to disable opening book
-        # self.data = None
+        # OpeningBookConfig.DISABLED: do not use apply opening book technique. Will not use values from "data.pickle".
+        # OpeningBookConfig.EVALUATION: uses "data.pickle" values for next actions. Does not write new moves to "data.pickle".
+        # OpeningBookConfig.TRAINING: uses "data.pickle" values for next actions. Does save new moves to "data.pickle" file.
+        self.openingBookConfig = OpeningBookConfig.DISABLED
 
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
         arrs = []
@@ -102,14 +110,15 @@ class CustomPlayer(DataPlayer):
         **********************************************************************
         """
         book = self.data
-        if(book != None and state.ply_count >= 2 and state.ply_count <= 9):
-            if(state.board in book):
-                act = book[state.board]
-                self.queue.put(act)
-                self.insertHistory(state, act)
-                return
-            else:
-                self.context["newRecords"] = True
+        if(self.openingBookConfig == OpeningBookConfig.EVALUATION or self.openingBookConfig == OpeningBookConfig.TRAINING):
+            if(book != None and state.ply_count >= 2 and state.ply_count <= 9):
+                if(state.board in book):
+                    act = book[state.board]
+                    self.queue.put(act)
+                    self.insertHistory(state, act)
+                    return
+                else:
+                    self.context["newRecords"] = True
 
         if state.ply_count < 2:
             acts = state.actions()
