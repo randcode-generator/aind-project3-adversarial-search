@@ -33,51 +33,31 @@ class CustomPlayer(DataPlayer):
 
     def __init__(self, player_id):
         super().__init__(player_id)
-
-        self.q1 = []
-        start = 52
-        end = 58
-        for _ in range(5):
-            self.q1 += list(range(start, end))
-            start += 13
-            end += 13
-        self.q1 = set(self.q1)
-
-        self.q2 = []
-        start = 0
-        end = 6
-        for _ in range(5):
-            self.q2 += list(range(start, end))
-            start += 13
-            end += 13
-        self.q2 = set(self.q2)
-
-        self.q3 = []
-        start = 5
-        end = 11
-        for _ in range(5):
-            self.q3 += list(range(start, end))
-            start += 13
-            end += 13
-        self.q3 = set(self.q3)
-
-        self.q4 = []
-        start = 57
-        end = 63
-        for _ in range(5):
-            self.q4 += list(range(start, end))
-            start += 13
-            end += 13
-        self.q4 = set(self.q4)
-
-        self.context = {"book": self.data, "history": {}, "newRecords": False}
+        ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
+        arrs = []
+        for r in ranges:
+            s = set()
+            start = r[0]
+            end = r[1]
+            for _ in range(5):
+                s.update(list(range(start, end)))
+                start += 13
+                end += 13
+            arrs.append(s)
+        
+        self.q1 = arrs[0]
+        self.q2 = arrs[1]
+        self.q3 = arrs[2]
+        self.q4 = arrs[3]
+        
+        self.context = {"history": {}, "newRecords": False}
     
     def insertHistory(self, state, bestMove):
         if bestMove == None:
             self.context["history"] = None
         else:
             history = self.context["history"]
-            if(history != None and len(history) < 3):
+            if(history != None and len(history) < 4):
                 self.context["history"][state.ply_count] = {"board": state.board, "move": bestMove}
 
     """ Implement your own agent to play knight's Isolation
@@ -113,8 +93,8 @@ class CustomPlayer(DataPlayer):
           Refer to (and use!) the Isolation.play() function to run games.
         **********************************************************************
         """
-        book = self.context["book"]
-        if(state.ply_count >= 2 and state.ply_count <= 7):
+        book = self.data
+        if(state.ply_count >= 2 and state.ply_count <= 9):
             if(book != None and state.board in book):
                 act = book[state.board]
                 self.queue.put(act)
