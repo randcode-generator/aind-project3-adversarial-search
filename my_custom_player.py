@@ -9,13 +9,17 @@ class OpeningBookConfig(IntEnum):
 
 class CustomPlayer(DataPlayer):
     def writeFile(self, filename, history, data=None):
+        t = {}
+        for key in history:
+            statePlusMove = history[key]
+            t[statePlusMove["board"]] = statePlusMove["move"]
+        sizeBeforeMerge = len(data)
+        if(data != None):
+            t.update(data)
+        sizeAfterMerge = len(t)
+        if(sizeBeforeMerge == sizeAfterMerge):
+            return
         with open(filename, "wb") as f:
-            t = {}
-            for key in history:
-                statePlusMove = history[key]
-                t[statePlusMove["board"]] = statePlusMove["move"]
-            if(data != None):
-                t.update(data)
             pickle.dump(t, f)
 
     def __del__(self):
