@@ -44,7 +44,7 @@ class CustomPlayer(DataPlayer):
         # OpeningBookConfig.DISABLED: do not use apply opening book technique. Will not use values from "data.pickle".
         # OpeningBookConfig.EVALUATION: uses "data.pickle" values for next actions. Does not write new moves to "data.pickle".
         # OpeningBookConfig.TRAINING: uses "data.pickle" values for next actions. Does save new moves to "data.pickle" file.
-        self.openingBookConfig = OpeningBookConfig.DISABLED
+        self.openingBookConfig = OpeningBookConfig.TRAINING
 
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
         arrs = []
@@ -106,13 +106,12 @@ class CustomPlayer(DataPlayer):
           Refer to (and use!) the Isolation.play() function to run games.
         **********************************************************************
         """
-        book = self.data
-        if(self.openingBookConfig == OpeningBookConfig.EVALUATION or self.openingBookConfig == OpeningBookConfig.TRAINING):
+        if(self.openingBookConfig == OpeningBookConfig.EVALUATION):
+            book = self.data
             if(book != None and state.ply_count >= 2 and state.ply_count <= 9):
                 if(state.board in book):
                     act = book[state.board]
                     self.queue.put(act)
-                    self.insertHistory(state, act)
                     return
                 else:
                     self.context["newRecords"] = True
@@ -130,11 +129,11 @@ class CustomPlayer(DataPlayer):
                 self.queue.put(act)
         else:
             for i in range(1, 5):
-                bestMove = self.alpha_beta_search(state, depth=i)
-                self.insertHistory(state, bestMove)
+                temp = bestMove = self.alpha_beta_search(state, depth=i)
                 if bestMove == None:
                     bestMove = state.actions()[0]
                 self.queue.put(bestMove)
+                self.insertHistory(state, temp)
 
     def alpha_beta_search(self, state, depth):
         """ Return the move along a branch of the game tree that
