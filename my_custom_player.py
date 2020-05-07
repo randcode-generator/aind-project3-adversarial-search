@@ -28,9 +28,6 @@ class CustomPlayer(DataPlayer):
         if(exists == False):
             return
 
-        if(self.context["newRecords"] == False):
-            return
-
         history = self.context["history"]
         if(history == None):
             return
@@ -44,7 +41,7 @@ class CustomPlayer(DataPlayer):
         # OpeningBookConfig.DISABLED: do not use apply opening book technique. Will not use values from "data.pickle".
         # OpeningBookConfig.EVALUATION: uses "data.pickle" values for next actions. Does not write new moves to "data.pickle".
         # OpeningBookConfig.TRAINING: uses "data.pickle" values for next actions. Does save new moves to "data.pickle" file.
-        self.openingBookConfig = OpeningBookConfig.TRAINING
+        self.openingBookConfig = OpeningBookConfig.EVALUATION
 
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
         arrs = []
@@ -63,7 +60,7 @@ class CustomPlayer(DataPlayer):
         self.q3 = arrs[2]
         self.q4 = arrs[3]
 
-        self.context = {"history": {}, "newRecords": False}
+        self.context = {"history": {}}
     
     def insertHistory(self, state, bestMove):
         if bestMove == None:
@@ -113,8 +110,6 @@ class CustomPlayer(DataPlayer):
                     act = book[state.board]
                     self.queue.put(act)
                     return
-                else:
-                    self.context["newRecords"] = True
 
         if state.ply_count < 2:
             acts = state.actions()
