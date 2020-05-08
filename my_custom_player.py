@@ -45,7 +45,7 @@ class CustomPlayer(DataPlayer):
         # OpeningBookConfig.DISABLED: do not use apply opening book technique. Will not use values from "data.pickle".
         # OpeningBookConfig.EVALUATION: uses "data.pickle" values for next actions. Does not write new moves to "data.pickle".
         # OpeningBookConfig.TRAINING: uses "data.pickle" values for next actions. Does save new moves to "data.pickle" file.
-        self.openingBookConfig = OpeningBookConfig.TRAINING
+        self.openingBookConfig = OpeningBookConfig.EVALUATION
 
         ranges = [(52, 58), (0, 6), (5, 11), (57, 63)]
         arrs = []
